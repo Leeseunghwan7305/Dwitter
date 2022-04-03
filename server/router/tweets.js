@@ -1,75 +1,33 @@
-import express from "express";
-import "express-async-errors";
-let router = express.Router();
+import express from 'express';
+import 'express-async-errors';
+import { body } from 'express-validator';
+import * as tweetController from '../controller/tweet.js';
+import { validate } from '../middleware/validator.js';
 
-let tweets = [
-  {
-    id: "1",
-    text: "드림코더분들 화이팅",
-    createdAt: Date.now().toString(),
-    name: "Bob",
-    username: "bob",
-    url: "강아지.jpg",
-  },
-  {
-    id: "2",
-    text: "안뇽!",
-    createdAt: Date.now().toString(),
-    name: "Ellie",
-    username: "ellie",
-  },
+const router = express.Router();
+
+const validateTweet = [
+  body('text')
+    .trim()
+    .isLength({ min: 3 })
+    .withMessage('text should be at least 3 characters'),
+  validate,
 ];
-//Get /tweets
-//Get /tweets?username=:username
-router.get("/", (req, res, next) => {
-  const username = req.query.username;
-  const data = username
-    ? tweets.filter((tweet) => {
-        username == tweet.username;
-      })
-    : tweets;
-  res.status(200).json(data);
-});
-router.get("/:id", (req, res, next) => {
-  const id = req.params.id;
-  const tweet = tweets.find((t) => t.id == id);
-  if (tweet) {
-    res.status(200).json(tweet);
-  } else {
-    res.sendStatus(404).json({ message: "tweet not found" });
-  }
-});
-router.post("/", (req, res, next) => {
-  const { text, name, username } = req.body;
-  const tweet = {
-    id: Date.now().toString(),
-    text,
-    createdAt: new Date(),
-    name,
-    username,
-  };
-  tweets = [tweet, ...tweets];
-  res.status(201).json(tweet);
-});
-router.put("/:id", (req, res, next) => {
-  const id = req.params.id;
-  const text = req.body.text;
-  const tweet = tweets.find((tweet) => tweet.id == id);
-  if (tweet) {
-    tweet.text = text;
-    res.status(200).json(tweet);
-  } else {
-    res.sendStatus(204);
-  }
-});
-router.delete("/:id", (req, res, next) => {
-  const id = req.params.id;
-  tweets = tweets.filter((t) => t.id !== id);
-  res.sendStatus(204);
-});
-//Get /tweets/:id
-//POST /tweets
-//PUT /tweets/:id
-//DELETE /tweets/:id
+
+// GET /tweet
+// GET /tweets?username=:username
+router.get('/', tweetController.getTweets);
+
+// GET /tweets/:id
+router.get('/:id', tweetController.getTweet);
+
+// POST /tweeets
+router.post('/', validateTweet, tweetController.createTweet);
+
+// PUT /tweets/:id
+router.put('/:id', validateTweet, tweetController.updateTweet);
+
+// DELETE /tweets/:id
+router.delete('/:id', tweetController.deleteTweet);
 
 export default router;
